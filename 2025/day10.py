@@ -10,12 +10,6 @@ input_test = """[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
 [...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
 [.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}"""
 
-def apply_button(state, button):
-    new_state = state.copy()
-    for n in button:
-        new_state[n] = not new_state[n]
-    return new_state
-
 def solve1(buttons, lights):
     final = 0
     for i, x in enumerate(lights):
@@ -56,7 +50,6 @@ def solve2(buttons, joltages):
                 A[j,k] = 1
 
     return int(sum(scipy.optimize.linprog(c, A_eq=A, b_eq=b, integrality=1).x))
-
 
 def solve(input_text):
     lines = input_text.split("\n")
