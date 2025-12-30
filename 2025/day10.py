@@ -16,67 +16,69 @@ def apply_button(state, button):
         new_state[n] = not new_state[n]
     return new_state
 
-def solve1(input_text):
-    total = 0
+def solve1(buttons, lights):
+    final = 0
+    for i, x in enumerate(lights):
+        if x == "#":
+            final |= 2 ** i
+
+    operations = []
+    for button in buttons:
+        operation = 0
+        for i in button:
+            operation |= 2 ** i
+        operations.append(operation)
+
+    distances = [0] + [2 ** 32] * (2 ** len(lights) - 1)
+    queue = deque([0])
+    while queue:
+        state = queue.popleft()
+        if state == final:
+            return distances[state]
+
+        for operation in operations:
+            state2 = state ^ operation
+            distance2 = distances[state] + 1
+            if distance2 < distances[state2]:
+                distances[state2] = distance2
+                queue.append(state2)
+
+def solve2(buttons, joltages):
+    num_buttons = len(buttons)
+    num_counters = len(joltages)
+    A = np.zeros((num_counters, num_buttons))
+    b = np.array(joltages)
+    c = np.array([1] * num_buttons)
+
+    for j in range(num_counters):
+        for k in range(num_buttons):
+            if j in buttons[k]:
+                A[j,k] = 1
+
+    return int(sum(scipy.optimize.linprog(c, A_eq=A, b_eq=b, integrality=1).x))
+
+
+def solve(input_text):
     lines = input_text.split("\n")
+    part1 = 0
+    part2 = 0
 
     for i in range(len(lines)):
         parts = lines[i].split()
-        final = np.array([False if x == "." else True for x in parts[0][1:-1]])
+        lights = parts[0][1:-1]
         buttons = [[int(x) for x in y[1:-1].split(",")] for y in parts[1:-1]]
-        state = np.array([False] * len(final))
-        
-        answer = None
-        queue = deque([])
-        for button in buttons:
-            new_state = apply_button(state, button)
-            if not np.bitwise_xor(new_state, final).any():
-                answer = 1
-                break
-            queue.append((1, new_state))
-        
-        while answer is None and queue:
-            count, state = queue.popleft()
-
-            for button in buttons:
-                new_state = apply_button(state, button)
-                if not np.bitwise_xor(new_state, final).any():
-                    answer = count + 1
-                    break
-                queue.append((count + 1, new_state))
-
-        total += answer
-        
-    print(total)
-
-def solve2(input_text):
-    total = 0
-    lines = input_text.split("\n")
-    for i in range(len(lines)):
-        parts = lines[i].split()
         joltages = [int(x) for x in parts[-1][1:-1].split(",")]
-        num_counters = len(joltages)
-        num_buttons = len(parts[1:-1])
-        buttons = [[int(x) for x in y[1:-1].split(",")] for y in parts[1:-1]]
-        A = np.zeros((num_counters, num_buttons))
-        b = np.array(joltages)
-        c = np.array([1] * num_buttons)
 
-        for j in range(num_counters):
-            for k in range(num_buttons):
-                if j in buttons[k]:
-                    A[j,k] = 1
+        part1 += solve1(buttons, lights)
+        part2 += solve2(buttons, joltages)
 
-        total += sum(scipy.optimize.linprog(c, A_eq=A, b_eq=b, integrality=1).x)
-
-    print(int(total))
+    print(part1)
+    print(part2)
 
 print("Test")
-solve1(input_test)
-solve2(input_test)
+solve(input_test)
 print("Real")
 start_time = time.time()
-solve1(input_real)
-solve2(input_real)
+solve(input_real)
 elapsed_time = time.time() - start_time
 print(f"Execution time: {elapsed_time} seconds")
